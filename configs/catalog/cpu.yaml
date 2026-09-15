@@ -1,0 +1,59 @@
+area: cpu
+
+diagnostics:
+  - id: load_average
+    description: >
+      Show the system load average and the number of currently running
+      and total processes.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "cat /proc/loadavg"
+      - "uptime"
+
+  - id: cpu_info
+    description: >
+      Show CPU architecture, processor count, CPU model and available
+      CPU features.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "lscpu"
+      - "cat /proc/cpuinfo"
+
+  - id: cpu_statistics
+    description: >
+      Show aggregate and per-CPU CPU time statistics.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "cat /proc/stat"
+
+  - id: cpu_usage
+    description: >
+      Show a point-in-time view of CPU utilization and the processes
+      currently consuming CPU.
+    cost: medium
+    timeout_seconds: 15
+    commands:
+      - "top -b -n 1 -o %CPU"
+      - "ps -eo pid,ppid,stat,comm,%cpu,%mem --sort=-%cpu | head -30"
+
+  - id: cpu_per_core_usage
+    description: >
+      Show CPU utilization separately for each processor core over a
+      short sampling interval.
+    cost: medium
+    timeout_seconds: 20
+    commands:
+      - "mpstat -P ALL 1 2"
+      - "vmstat 1 2"
+
+  - id: cpu_pressure
+    description: >
+      Show Linux CPU pressure stall information to identify time spent
+      waiting for CPU resources.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "cat /proc/pressure/cpu"

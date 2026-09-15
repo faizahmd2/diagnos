@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# Go binaries
+diagnos
+*.exe
+*.out
+
+# Local/debug artifacts
+debug/
+
+# Environment/secrets
+.env
+.env.*
+!.env.example

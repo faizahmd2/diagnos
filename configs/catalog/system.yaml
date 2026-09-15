@@ -1,0 +1,73 @@
+area: system
+
+diagnostics:
+  - id: system_uptime
+    description: >
+      Show system uptime, boot time and current load information.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "uptime"
+      - "cat /proc/uptime"
+
+    log_sources:
+      - system
+
+  - id: kernel_information
+    description: >
+      Show Linux kernel version, architecture and operating system
+      information.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "uname -a"
+      - "cat /etc/os-release"
+
+    log_sources:
+      - kernel
+
+  - id: failed_services
+    description: >
+      Identify systemd services that are currently in a failed state.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "systemctl --failed --no-legend"
+      - "systemctl --failed"
+
+  - id: systemd_service_state
+    description: >
+      Show the current systemd service state and recently changed units.
+    cost: medium
+    timeout_seconds: 15
+    commands:
+      - "systemctl list-units --type=service --state=running,failed --no-pager"
+      - "systemctl list-units --failed --no-pager"
+
+  - id: mount_state_system
+    description: >
+      Show mounted filesystems, filesystem types and mount options.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "findmnt -o TARGET,SOURCE,FSTYPE,OPTIONS"
+      - "cat /proc/mounts"
+
+  - id: kernel_pressure
+    description: >
+      Show Linux pressure stall information for CPU, memory and I/O
+      resource contention.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "cat /proc/pressure/cpu /proc/pressure/memory /proc/pressure/io"
+
+  - id: boot_and_system_events
+    description: >
+      Show recent high-priority system journal events that may indicate
+      service, kernel or infrastructure problems.
+    cost: medium
+    timeout_seconds: 20
+    commands:
+      - "journalctl -p warning..alert -n 100 --no-pager -o short-iso"
+      - "journalctl -b -p warning..alert -n 100 --no-pager -o short-iso"

@@ -1,0 +1,61 @@
+area: process
+
+diagnostics:
+  - id: process_list
+    description: >
+      Show currently running processes, their parent processes, states
+      and resource utilization.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "ps -eo pid,ppid,stat,user,comm,%cpu,%mem,etime --sort=pid"
+
+  - id: cpu_consuming_processes
+    description: >
+      Identify processes currently consuming the most CPU.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "ps -eo pid,ppid,stat,user,comm,%cpu,%mem,etime --sort=-%cpu | head -30"
+      - "top -b -n 1 -o %CPU"
+
+    log_sources:
+      - process
+      - application
+
+  - id: memory_consuming_processes
+    description: >
+      Identify processes currently consuming the most memory.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "ps -eo pid,ppid,stat,user,comm,%cpu,%mem,rss,vsz --sort=-%mem | head -30"
+      - "top -b -n 1 -o %MEM"
+
+  - id: process_tree
+    description: >
+      Show parent-child relationships between running processes.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "ps -eo pid,ppid,stat,comm --forest"
+
+  - id: process_states
+    description: >
+      Show processes grouped by their current execution state to help
+      identify blocked, sleeping or abnormal process behavior.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "ps -eo stat | sort | uniq -c"
+      - "ps -eo pid,ppid,stat,comm,wchan:32 --sort=stat | head -50"
+
+  - id: process_threads
+    description: >
+      Show processes with thread counts and CPU utilization to identify
+      processes with unusually high thread activity.
+    cost: medium
+    timeout_seconds: 15
+    commands:
+      - "ps -eLf --sort=-pcpu | head -50"
+      - "ps -eo pid,ppid,nlwp,comm,%cpu,%mem --sort=-nlwp | head -30"

@@ -1,0 +1,57 @@
+area: memory
+
+diagnostics:
+  - id: memory_usage
+    description: >
+      Show total, used, available and free system memory together with
+      swap utilization.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "free -h"
+      - "cat /proc/meminfo"
+
+  - id: memory_statistics
+    description: >
+      Show detailed kernel memory statistics including reclaimable,
+      cached and anonymous memory.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "cat /proc/meminfo"
+
+  - id: memory_pressure
+    description: >
+      Show Linux memory pressure stall information to identify time
+      spent waiting for memory resources.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "cat /proc/pressure/memory"
+
+  - id: vm_statistics
+    description: >
+      Show virtual memory, paging, process and system activity over a
+      short sampling interval.
+    cost: medium
+    timeout_seconds: 20
+    commands:
+      - "vmstat 1 2"
+
+  - id: swap_usage
+    description: >
+      Show configured swap devices and their current utilization.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "swapon --show"
+      - "cat /proc/swaps"
+
+  - id: memory_top_processes
+    description: >
+      Identify processes currently consuming the most system memory.
+    cost: medium
+    timeout_seconds: 15
+    commands:
+      - "ps -eo pid,ppid,stat,comm,%mem,%cpu,rss,vsz --sort=-%mem | head -30"
+      - "top -b -n 1 -o %MEM"

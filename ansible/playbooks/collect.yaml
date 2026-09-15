@@ -1,0 +1,8 @@
+---
+- hosts: "{{ target_host }}"
+  gather_facts: no
+
+  tasks:
+    - name: run diagnostic command
+      shell: "timeout --signal=TERM --kill-after=5s {{ command_timeout }} bash -lc {{ cmd | quote }}"
+      register: result

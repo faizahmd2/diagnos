@@ -1,0 +1,58 @@
+area: network
+
+diagnostics:
+  - id: network_interfaces
+    description: >
+      Show network interfaces, addresses, link state and MTU information.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "ip -br addr"
+      - "ip link"
+
+  - id: routing_table
+    description: >
+      Show IPv4 and IPv6 routing information used by the machine.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "ip route"
+      - "ip -6 route"
+
+  - id: interface_statistics
+    description: >
+      Show per-interface packet, byte, error and drop statistics.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "ip -s link"
+      - "cat /proc/net/dev"
+
+  - id: dns_configuration
+    description: >
+      Show the DNS configuration currently used by the machine.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "resolvectl status"
+      - "cat /etc/resolv.conf"
+
+  - id: network_statistics
+    description: >
+      Show kernel network protocol statistics including TCP, UDP and IP
+      errors and packet activity.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "cat /proc/net/snmp"
+      - "cat /proc/net/netstat"
+
+  - id: network_connections
+    description: >
+      Show active network connections and the processes associated with
+      network sockets.
+    cost: medium
+    timeout_seconds: 15
+    commands:
+      - "ss -tunap"
+      - "ss -s"

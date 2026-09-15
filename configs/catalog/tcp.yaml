@@ -1,0 +1,59 @@
+area: tcp
+
+diagnostics:
+  - id: tcp_connection_summary
+    description: >
+      Show a summary of TCP socket states and connection counts.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "ss -s"
+      - "cat /proc/net/sockstat"
+
+  - id: tcp_connections
+    description: >
+      Show active TCP connections and their current connection states.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "ss -tan"
+      - "cat /proc/net/tcp"
+
+  - id: tcp_listening
+    description: >
+      Show TCP ports currently listening for incoming connections and
+      the associated processes.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "ss -ltnp"
+      - "ss -ltn"
+
+  - id: tcp_statistics
+    description: >
+      Show kernel TCP protocol statistics including connection,
+      retransmission and error counters.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "nstat -az | grep -E 'Tcp|TCP'"
+      - "cat /proc/net/snmp"
+
+  - id: socket_usage
+    description: >
+      Show kernel socket allocation and usage statistics.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "cat /proc/net/sockstat"
+      - "cat /proc/net/sockstat6"
+
+  - id: tcp_connection_details
+    description: >
+      Show TCP connections with timers, queue sizes and process
+      information for deeper connection analysis.
+    cost: medium
+    timeout_seconds: 20
+    commands:
+      - "ss -tanpi"
+      - "ss -tanp"

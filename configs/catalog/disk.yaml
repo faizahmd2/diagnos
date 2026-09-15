@@ -1,0 +1,85 @@
+area: disk
+
+diagnostics:
+
+  - id: filesystem_usage
+    description: >
+      Show filesystem capacity, filesystem type and available space
+      for mounted filesystems.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "df -hT"
+
+  - id: inode_usage
+    description: >
+      Show inode consumption for mounted filesystems.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "df -ih"
+
+  - id: mount_state_disc
+    description: >
+      Show mounted filesystems, filesystem types and mount options.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "findmnt -o TARGET,SOURCE,FSTYPE,OPTIONS"
+      - "cat /proc/mounts"
+
+  - id: disk_devices
+    description: >
+      Show block devices, partitions, filesystem relationships and
+      mount points.
+    cost: low
+    timeout_seconds: 10
+    commands:
+      - "lsblk -o NAME,MAJ:MIN,SIZE,TYPE,FSTYPE,MOUNTPOINTS"
+
+  - id: disk_io
+    description: >
+      Show current CPU and block-device I/O statistics.
+    cost: medium
+    timeout_seconds: 15
+    commands:
+      - "iostat -xz 1 2"
+      - "cat /proc/diskstats"
+
+  - id: deleted_open_files
+    description: >
+      Show files that have been deleted from the filesystem but are
+      still held open by running processes.
+    cost: medium
+    timeout_seconds: 20
+    commands:
+      - "lsof +L1"
+
+  - id: largest_directories
+    description: >
+      Identify directories consuming the most space on the root
+      filesystem.
+    cost: high
+    timeout_seconds: 60
+    commands:
+      - "du -xhd1 / 2>/dev/null | sort -h"
+    trigger:
+      signal: "filesystem_usage"
+      operator: ">="
+      value: 80
+
+  - id: largest_files
+    description: >
+      Identify large files on the root filesystem.
+    cost: high
+    timeout_seconds: 60
+    commands:
+      - >
+        find / -xdev -type f -size +100M
+        -printf '%s %p\n' 2>/dev/null |
+        sort -n |
+        tail -50
+    trigger:
+      signal: "filesystem_usage"
+      operator: ">="
+      value: 90
