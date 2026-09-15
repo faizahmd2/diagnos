@@ -27,11 +27,3 @@ ai:
 
   request_limits:
     max_lines_context_file: 1000
-
-logs:
-  applications:
-    - name: quickorder
-      service: quickorder
-      paths:
-        - /home/ubuntu/.pm2/logs/quickorder-error.log
-        - /home/ubuntu/.pm2/logs/quickorder-out.log

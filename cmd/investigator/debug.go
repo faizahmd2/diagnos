@@ -20,6 +20,7 @@ import (
 	"github.com/faizahmd2/diagnos/internal/config"
 	"github.com/faizahmd2/diagnos/internal/executor"
 	"github.com/faizahmd2/diagnos/internal/planner"
+	"github.com/faizahmd2/diagnos/internal/resources"
 )
 
 func newDebugCmd() *cobra.Command {
@@ -47,12 +48,19 @@ func newDebugCmd() *cobra.Command {
 			// Step 2: Validate ansible
 			// --------------------------------------------------
 
+			playbookPath, cleanupPlaybook, err := resources.WritePlaybook()
+			if err != nil {
+				return fmt.Errorf("failed to prepare ansible playbook: %w", err)
+			}
+			defer cleanupPlaybook()
+
 			ansibleExecutor := executor.NewAnsibleExecutor(
-				"ansible/playbooks/collect.yaml",
+				playbookPath,
 				executor.Target{
 					Host: targetConfig.Host,
 					User: targetConfig.User,
-				})
+				},
+			)
 
 			if err := ansibleExecutor.CheckTarget(); err != nil {
 				return err
@@ -232,8 +240,9 @@ func newDebugCmd() *cobra.Command {
 				)
 			}
 
-			investigationCatalog, err := catalog.LoadDirectory(
-				"configs/catalog",
+			investigationCatalog, err := catalog.LoadEmbedded(
+				resources.Files,
+				"catalog",
 			)
 			if err != nil {
 				return fmt.Errorf(
@@ -366,6 +375,7 @@ func newDebugCmd() *cobra.Command {
 				plan,
 				targetConfig.Host,
 				ansibleExecutor,
+				cfg.Logs.Applications,
 				30*time.Minute,
 				30*time.Second,
 			)

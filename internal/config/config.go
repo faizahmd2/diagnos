@@ -7,10 +7,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type LogConfig struct {
-	Applications []ApplicationLogConfig `yaml:"applications"`
-}
-
 type ApplicationLogConfig struct {
 	Name    string   `yaml:"name"`
 	Service string   `yaml:"service"`
@@ -42,8 +38,6 @@ type Config struct {
 	Telemetry struct {
 		Prometheus struct {
 			URL string `yaml:"url"`
-
-			Targets map[string]TargetConfig `yaml:"targets"`
 
 			Auth struct {
 				Type        string `yaml:"type"`

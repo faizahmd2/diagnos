@@ -39,12 +39,16 @@ func LoadFile(path string) (*Catalog, error) {
 		)
 	}
 
+	return parseFileCatalog(data, path)
+}
+
+func parseFileCatalog(data []byte, name string) (*Catalog, error) {
 	var raw fileCatalog
 
 	if err := yaml.Unmarshal(data, &raw); err != nil {
 		return nil, fmt.Errorf(
 			"failed to parse catalog %s: %w",
-			path,
+			name,
 			err,
 		)
 	}
@@ -76,7 +80,7 @@ func LoadFile(path string) (*Catalog, error) {
 	if err := Validate(catalog); err != nil {
 		return nil, fmt.Errorf(
 			"invalid catalog %s: %w",
-			path,
+			name,
 			err,
 		)
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/faizahmd2/diagnos/internal/config"
 	"github.com/faizahmd2/diagnos/internal/executor"
 	"github.com/faizahmd2/diagnos/internal/planner"
 )
@@ -12,6 +13,7 @@ func CollectRelatedEvidence(
 	plan planner.Plan,
 	targetHost string,
 	ansibleExecutor *executor.AnsibleExecutor,
+	configuredApplications []config.ApplicationLogConfig,
 	since time.Duration,
 	timeout time.Duration,
 ) ([]Evidence, error) {
@@ -38,6 +40,74 @@ func CollectRelatedEvidence(
 			return collector.CollectEvidence(
 				targetHost,
 				since,
+			)
+		},
+		"process": func() ([]Evidence, error) {
+			collector := NewApplicationCollector(
+				ansibleExecutor,
+				timeout,
+				20,
+			)
+
+			return collector.CollectEvidence(
+				targetHost,
+				nil,
+				since,
+			)
+		},
+		"kernel": func() ([]Evidence, error) {
+			collector := NewKernelCollector(
+				ansibleExecutor,
+				timeout,
+			)
+
+			return collector.CollectEvidence(
+				targetHost,
+				since,
+			)
+		},
+		"application": func() ([]Evidence, error) {
+			var sources []LogSource
+
+			for _, application := range configuredApplications {
+				for _, path := range application.Paths {
+					if path == "" {
+						continue
+					}
+
+					sources = append(sources, LogSource{
+						Name:       application.Name,
+						Path:       path,
+						Service:    application.Service,
+						SourceType: "configured",
+					})
+				}
+			}
+
+			if len(sources) == 0 {
+				return nil, nil
+			}
+
+			collector := NewApplicationCollector(
+				ansibleExecutor,
+				timeout,
+				20,
+			)
+
+			return collector.CollectEvidence(
+				targetHost,
+				sources,
+				since,
+			)
+		},
+		"docker": func() ([]Evidence, error) {
+			collector := NewDockerCollector(
+				ansibleExecutor,
+				timeout,
+			)
+
+			return collector.CollectEvidence(
+				targetHost,
 			)
 		},
 	}
