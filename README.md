@@ -1,30 +1,177 @@
-## Diagnos
+# Diagnos
 
-Diagnos is a single Go binary for collecting read-only machine evidence and
-asking an LLM to produce an investigation report. It uses native SSH.
+Read-only Linux machine investigation CLI using native SSH, Prometheus, and optional LLM analysis.
+
+## Install
+
+Download the latest release:
+
+[Diagnos Releases](https://github.com/faizahmd2/diagnos/releases/latest)
+
+### macOS Apple Silicon
 
 ```sh
-# A release contains only these two runtime files.
-curl -LO https://example.invalid/diagnos
-curl -LO https://example.invalid/app.yaml
-chmod +x diagnos
-# Edit app.yaml, then:
-./diagnos config check
-./diagnos debug production-vm --hint "intermittent latency"
+sudo mkdir -p /opt/diagnos
+
+sudo curl -L \
+  -o /opt/diagnos/diagnos \
+  https://github.com/faizahmd2/diagnos/releases/latest/download/diagnos_v0.1.0_darwin_arm64
+
+sudo curl -L \
+  -o /opt/diagnos/app.yaml \
+  https://github.com/faizahmd2/diagnos/releases/latest/download/app.yaml
+
+sudo chmod +x /opt/diagnos/diagnos
+
+sudo ln -sf /opt/diagnos/diagnos /usr/local/bin/diagnos
 ```
 
-`debug` accepts either a configured target alias or a host directly. SSH uses
-the agent first, then an explicitly configured private key, then normal
-`~/.ssh/id_*` keys. New hosts are prompted for by default; CI can use
-`host_key_policy: strict` or `accept-new`.
+### Linux x86-64
 
-Use `./diagnos debug my-host --dry-run` to inspect the embedded diagnostic
-catalog without opening an SSH connection.
+```sh
+sudo mkdir -p /opt/diagnos
 
-`app.yaml` is the production configuration. Its default
-`output.report_type: app-metrics` writes a compact direct report and makes no
-AI calls. Set it to `with-ai` only when the full AI investigation is wanted.
+sudo curl -L \
+  -o /opt/diagnos/diagnos \
+  https://github.com/faizahmd2/diagnos/releases/latest/download/diagnos_v0.1.0_linux_amd64
 
-For a release build, run `make release VERSION=v1.0.0`. The `dist/` directory
-contains only `diagnos` and `app.yaml`; the binary discovers the adjacent
-configuration even when launched from another working directory.
+sudo curl -L \
+  -o /opt/diagnos/app.yaml \
+  https://github.com/faizahmd2/diagnos/releases/latest/download/app.yaml
+
+sudo chmod +x /opt/diagnos/diagnos
+
+sudo ln -sf /opt/diagnos/diagnos /usr/local/bin/diagnos
+```
+
+### Linux ARM64
+
+```sh
+sudo mkdir -p /opt/diagnos
+
+sudo curl -L \
+  -o /opt/diagnos/diagnos \
+  https://github.com/faizahmd2/diagnos/releases/latest/download/diagnos_v0.1.0_linux_arm64
+
+sudo curl -L \
+  -o /opt/diagnos/app.yaml \
+  https://github.com/faizahmd2/diagnos/releases/latest/download/app.yaml
+
+sudo chmod +x /opt/diagnos/diagnos
+
+sudo ln -sf /opt/diagnos/diagnos /usr/local/bin/diagnos
+```
+
+Check:
+
+```sh
+diagnos --version
+```
+
+## Configure
+
+Edit the configuration:
+
+```sh
+sudo nano /opt/diagnos/app.yaml
+```
+
+Configure your target:
+
+```yaml
+targets:
+  prod-vm-alias:
+    host: 10.0.0.10
+    user: ubuntu
+    port: 22
+```
+
+The target name (`prod-vm-alias`) is used when running Diagnos.
+
+Configure SSH if needed:
+
+```yaml
+ssh:
+  host_key_policy: prompt
+```
+
+Available policies:
+
+```text
+prompt
+strict
+accept-new
+insecure
+```
+
+Prometheus is optional.
+
+AI is optional. For AI reports:
+
+```yaml
+output:
+  report_type: with-ai
+```
+
+For direct reports:
+
+```yaml
+output:
+  report_type: app-metrics
+```
+
+Add secrets to `app.yaml` or export with key.
+
+## Validate
+
+```sh
+diagnos config check
+```
+
+## Run
+
+Run from anywhere:
+
+```sh
+diagnos debug production-vm
+```
+
+Add an investigation hint:
+
+```sh
+diagnos debug production-vm \
+  --hint "intermittent latency"
+```
+
+## Reports
+
+Investigation output is written under the Diagnos installation directory:
+
+```text
+/opt/diagnos/debug/
+```
+
+For example:
+
+```text
+/opt/diagnos/debug/
+├── diagnos-run.txt
+├── context.txt
+└── final-report.md
+```
+
+## Release Assets
+
+Each release contains:
+
+```text
+diagnos_v0.1.0_darwin_arm64
+diagnos_v0.1.0_linux_amd64
+diagnos_v0.1.0_linux_arm64
+app.yaml
+checksums.txt
+```
+
+## License
+
+See [LICENSE](LICENSE).
