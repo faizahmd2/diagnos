@@ -9,12 +9,12 @@ import (
 )
 
 type SystemCollector struct {
-	Executor *executor.AnsibleExecutor
+	Executor *executor.NativeExecutor
 	Timeout  time.Duration
 }
 
 func NewSystemCollector(
-	exec *executor.AnsibleExecutor,
+	exec *executor.NativeExecutor,
 	timeout time.Duration,
 ) *SystemCollector {
 	return &SystemCollector{
@@ -27,6 +27,11 @@ func (c *SystemCollector) CollectEvidence(
 	targetHost string,
 	since time.Duration,
 ) ([]Evidence, error) {
+	// System service and unit logs are meaningful only when both commands are
+	// available. Other collectors continue normally on non-systemd hosts.
+	if !c.Executor.Supports("systemctl") || !c.Executor.Supports("journalctl") {
+		return nil, nil
+	}
 	command := "systemctl --failed --no-legend"
 
 	output, err := c.Executor.Run(

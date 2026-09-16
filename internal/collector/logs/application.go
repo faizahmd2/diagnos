@@ -9,14 +9,14 @@ import (
 )
 
 type ApplicationCollector struct {
-	Executor   *executor.AnsibleExecutor
+	Executor   *executor.NativeExecutor
 	Timeout    time.Duration
 	Discovery  *Discovery
 	MaxSources int
 }
 
 func NewApplicationCollector(
-	exec *executor.AnsibleExecutor,
+	exec *executor.NativeExecutor,
 	timeout time.Duration,
 	maxSources int,
 ) *ApplicationCollector {

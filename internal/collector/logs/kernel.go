@@ -9,12 +9,12 @@ import (
 )
 
 type KernelCollector struct {
-	Executor *executor.AnsibleExecutor
+	Executor *executor.NativeExecutor
 	Timeout  time.Duration
 }
 
 func NewKernelCollector(
-	exec *executor.AnsibleExecutor,
+	exec *executor.NativeExecutor,
 	timeout time.Duration,
 ) *KernelCollector {
 	return &KernelCollector{
@@ -71,6 +71,9 @@ func (c *KernelCollector) CollectEvidence(
 	targetHost string,
 	since time.Duration,
 ) ([]Evidence, error) {
+	if !c.Executor.Supports("journalctl") {
+		return nil, nil
+	}
 	result := c.Collect(targetHost, since)
 
 	if result.Status != StatusSuccess {

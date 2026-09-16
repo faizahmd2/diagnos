@@ -23,12 +23,12 @@ type LogSource struct {
 }
 
 type Discovery struct {
-	Executor *executor.AnsibleExecutor
+	Executor *executor.NativeExecutor
 	Timeout  time.Duration
 }
 
 func NewDiscovery(
-	exec *executor.AnsibleExecutor,
+	exec *executor.NativeExecutor,
 	timeout time.Duration,
 ) *Discovery {
 	return &Discovery{

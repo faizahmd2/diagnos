@@ -10,7 +10,6 @@ var interestingLogPattern = regexp.MustCompile(
 )
 
 var ignoredLogPatterns = []*regexp.Regexp{
-	regexp.MustCompile(`ansible-ansible\.legacy\.command`),
 	regexp.MustCompile(`_raw_params=.*journalctl`),
 }
 

@@ -1,22 +1,23 @@
 package executor
 
 import (
-	"errors"
+	"context"
 	"time"
 
 	"github.com/faizahmd2/diagnos/internal/catalog"
 	"github.com/faizahmd2/diagnos/internal/planner"
+	"github.com/faizahmd2/diagnos/internal/transport"
 )
 
 type DiagnosticExecutor struct {
-	Ansible *AnsibleExecutor
+	Transport transport.Executor
 }
 
 func NewDiagnosticExecutor(
-	ansible *AnsibleExecutor,
+	exec transport.Executor,
 ) *DiagnosticExecutor {
 	return &DiagnosticExecutor{
-		Ansible: ansible,
+		Transport: exec,
 	}
 }
 
@@ -37,6 +38,12 @@ func (e *DiagnosticExecutor) Execute(
 			)
 
 			results = append(results, result)
+			// Commands are ordered primary -> fallback. A non-zero exit is
+			// deliberately not a transport error, but it does select the next
+			// catalog fallback. Once one succeeds no redundant probe is run.
+			if result.Status == catalog.StatusSuccess {
+				break
+			}
 		}
 	}
 
@@ -50,13 +57,7 @@ func (e *DiagnosticExecutor) executeCommand(
 
 	startedAt := time.Now()
 
-	output, err := e.Ansible.Run(
-		command,
-		time.Duration(
-			investigation.Diagnostic.TimeoutSeconds,
-		)*time.Second,
-	)
-
+	raw := e.Transport.Run(context.Background(), transport.Command{Key: investigation.CapabilityID, Argv: command, Timeout: time.Duration(investigation.Diagnostic.TimeoutSeconds) * time.Second})
 	endedAt := time.Now()
 
 	result := catalog.DiagnosticResult{
@@ -66,24 +67,29 @@ func (e *DiagnosticExecutor) executeCommand(
 		StartedAt:    startedAt,
 		EndedAt:      endedAt,
 		Duration:     endedAt.Sub(startedAt),
-		Output:       output,
+		Output:       raw.Stdout,
 	}
 
-	if err == nil {
+	if raw.Err == nil && raw.ExitCode == 0 && !raw.TimedOut {
 		result.Status = catalog.StatusSuccess
 		return result
 	}
 
-	var timeoutErr *CommandTimeoutError
-
-	if errors.As(err, &timeoutErr) {
+	if raw.TimedOut {
 		result.Status = catalog.StatusTimeout
-		result.Error = err.Error()
+		result.Error = "command timed out"
 		return result
 	}
 
 	result.Status = catalog.StatusFailed
-	result.Error = err.Error()
+	if raw.Err != nil {
+		result.Error = raw.Err.Error()
+	} else {
+		result.Error = raw.Stderr
+		if result.Error == "" {
+			result.Error = "remote command exited non-zero"
+		}
+	}
 
 	return result
 }

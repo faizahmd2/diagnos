@@ -12,15 +12,15 @@ import (
 func CollectRelatedEvidence(
 	plan planner.Plan,
 	targetHost string,
-	ansibleExecutor *executor.AnsibleExecutor,
+	nativeExecutor *executor.NativeExecutor,
 	configuredApplications []config.ApplicationLogConfig,
 	since time.Duration,
 	timeout time.Duration,
 ) ([]Evidence, error) {
 
-	if ansibleExecutor == nil {
+	if nativeExecutor == nil {
 		return nil, fmt.Errorf(
-			"ansible executor cannot be nil",
+			"native executor cannot be nil",
 		)
 	}
 
@@ -33,7 +33,7 @@ func CollectRelatedEvidence(
 	collectors := map[string]func() ([]Evidence, error){
 		"system": func() ([]Evidence, error) {
 			collector := NewSystemCollector(
-				ansibleExecutor,
+				nativeExecutor,
 				timeout,
 			)
 
@@ -44,7 +44,7 @@ func CollectRelatedEvidence(
 		},
 		"process": func() ([]Evidence, error) {
 			collector := NewApplicationCollector(
-				ansibleExecutor,
+				nativeExecutor,
 				timeout,
 				20,
 			)
@@ -57,7 +57,7 @@ func CollectRelatedEvidence(
 		},
 		"kernel": func() ([]Evidence, error) {
 			collector := NewKernelCollector(
-				ansibleExecutor,
+				nativeExecutor,
 				timeout,
 			)
 
@@ -89,7 +89,7 @@ func CollectRelatedEvidence(
 			}
 
 			collector := NewApplicationCollector(
-				ansibleExecutor,
+				nativeExecutor,
 				timeout,
 				20,
 			)
@@ -102,7 +102,7 @@ func CollectRelatedEvidence(
 		},
 		"docker": func() ([]Evidence, error) {
 			collector := NewDockerCollector(
-				ansibleExecutor,
+				nativeExecutor,
 				timeout,
 			)
 

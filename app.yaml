@@ -1,0 +1,50 @@
+# Diagnos production configuration. This is the only file to edit during setup.
+# Precedence: CLI flags > DIAGNOS_* environment variables > this file > defaults.
+
+app:
+  name: diagnos
+  log_level: info # debug | info | warn | error
+
+# Native SSH: agent, then key_path, then normal ~/.ssh/id_* keys. key_path must
+# name a PRIVATE key, never the .pub file placed in authorized_keys.
+ssh:
+  port: 22
+  connect_timeout: 10s
+  command_timeout: 30s
+  max_parallel: 4 # Keep <=8; a common sshd MaxSessions default is 10.
+  max_output_bytes: 1048576 # 1 MiB cap for each stdout/stderr stream.
+  host_key_policy: prompt # prompt | strict | accept-new | insecure
+  # key_path: ~/.ssh/id_ed25519
+  # known_hosts: ~/.ssh/known_hosts
+  # jump_hosts: [bastion.example.net:22]
+
+# Define a target alias, then pass that alias to `diagnos debug`. Do not commit
+# production addresses or usernames in a public release.
+targets: {}
+# Example:
+# targets:
+#   production-vm:
+#     host: 192.0.2.10
+#     user: ubuntu
+#     port: 22
+
+telemetry:
+  prometheus:
+    # Leave url empty when unavailable; host-only reporting still works.
+    url: ""
+    auth:
+      type: none
+
+# app-metrics (the default) does not make any AI call. Set output.report_type
+# to with-ai and provide the provider's key only when AI investigation is wanted.
+ai:
+  model: gemini/gemini-3.5-flash-lite
+  models:
+    gemini/gemini-3.5-flash-lite:
+      base_url: https://generativelanguage.googleapis.com
+      api_key_env: GEMINI_API_KEY
+  request_limits:
+    max_lines_context_file: 250 # Compact evidence budget for the report and AI context.
+
+output:
+  report_type: with-ai # app-metrics | with-ai (To use with ai setup AI keys and models)

@@ -1,14 +1,14 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+	"os/user"
+)
 
 func (c Config) ResolveTarget(name string) (TargetConfig, error) {
 	target, ok := c.Targets[name]
 	if !ok {
-		return TargetConfig{}, fmt.Errorf(
-			"target %q is not configured",
-			name,
-		)
+		target = TargetConfig{Host: name, User: c.SSH.User, Port: c.SSH.Port}
 	}
 
 	if target.Host == "" {
@@ -19,10 +19,24 @@ func (c Config) ResolveTarget(name string) (TargetConfig, error) {
 	}
 
 	if target.User == "" {
+		target.User = c.SSH.User
+	}
+	if target.User == "" {
+		if current, err := user.Current(); err == nil {
+			target.User = current.Username
+		}
+	}
+	if target.User == "" {
 		return TargetConfig{}, fmt.Errorf(
 			"target %q has no user configured",
 			name,
 		)
+	}
+	if target.Port == 0 {
+		target.Port = c.SSH.Port
+	}
+	if target.Port == 0 {
+		target.Port = 22
 	}
 
 	return target, nil

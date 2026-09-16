@@ -1,15 +1,9 @@
-# macOS
-.DS_Store
-
-# Go binaries
+# Local binaries and release output
 diagnos
-*.exe
-*.out
+dist/
 
-# Local/debug artifacts
+# Runtime investigation evidence
 debug/
 
-# Environment/secrets
-.env
-.env.*
-!.env.example
+# OS/editor metadata
+.DS_Store

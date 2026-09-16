@@ -9,12 +9,12 @@ import (
 )
 
 type DockerCollector struct {
-	Executor *executor.AnsibleExecutor
+	Executor *executor.NativeExecutor
 	Timeout  time.Duration
 }
 
 func NewDockerCollector(
-	exec *executor.AnsibleExecutor,
+	exec *executor.NativeExecutor,
 	timeout time.Duration,
 ) *DockerCollector {
 	return &DockerCollector{

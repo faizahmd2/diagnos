@@ -2,5 +2,5 @@ package resources
 
 import "embed"
 
-//go:embed ansible/collect.yaml catalog/*.yaml
+//go:embed catalog/*.yaml
 var Files embed.FS

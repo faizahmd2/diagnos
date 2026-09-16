@@ -48,12 +48,12 @@ type ProcessInfo struct {
 }
 
 type MetadataCollector struct {
-	Executor *executor.AnsibleExecutor
+	Executor *executor.NativeExecutor
 	Timeout  time.Duration
 }
 
 func NewMetadataCollector(
-	exec *executor.AnsibleExecutor,
+	exec *executor.NativeExecutor,
 	timeout time.Duration,
 ) *MetadataCollector {
 	return &MetadataCollector{

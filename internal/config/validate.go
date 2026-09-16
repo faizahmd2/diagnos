@@ -10,10 +10,6 @@ func Validate(cfg *Config) error {
 		return fmt.Errorf("config is nil")
 	}
 
-	if len(cfg.Targets) == 0 {
-		return fmt.Errorf("no targets configured")
-	}
-
 	for name, target := range cfg.Targets {
 		if strings.TrimSpace(name) == "" {
 			return fmt.Errorf("target name cannot be empty")
@@ -28,23 +24,29 @@ func Validate(cfg *Config) error {
 		}
 	}
 
-	if strings.TrimSpace(cfg.Telemetry.Prometheus.URL) == "" {
-		return fmt.Errorf("prometheus URL is required")
-	}
-
-	if strings.TrimSpace(cfg.AI.Model) == "" {
-		return fmt.Errorf("AI model is required")
-	}
-
-	if _, ok := cfg.AI.Models[cfg.AI.Model]; !ok {
-		return fmt.Errorf(
-			"AI model %q is not configured under ai.models",
-			cfg.AI.Model,
-		)
+	if strings.TrimSpace(cfg.AI.Model) != "" {
+		if _, ok := cfg.AI.Models[cfg.AI.Model]; !ok {
+			return fmt.Errorf(
+				"AI model %q is not configured under ai.models",
+				cfg.AI.Model,
+			)
+		}
 	}
 
 	if cfg.AI.RequestLimits.MaxLinesContextFile <= 0 {
 		return fmt.Errorf("ai.request_limits.max_lines_context_file must be greater than 0")
+	}
+	if cfg.SSH.Port < 1 || cfg.SSH.Port > 65535 {
+		return fmt.Errorf("ssh.port must be between 1 and 65535")
+	}
+	if cfg.SSH.MaxParallel < 1 {
+		return fmt.Errorf("ssh.max_parallel must be greater than zero")
+	}
+	if cfg.Output.ReportType != "app-metrics" && cfg.Output.ReportType != "with-ai" {
+		return fmt.Errorf("output.report_type must be app-metrics or with-ai")
+	}
+	if cfg.Output.ReportType == "with-ai" && strings.TrimSpace(cfg.AI.Provider) != "" && strings.TrimSpace(cfg.AI.APIKey) == "" {
+		return fmt.Errorf("DIAGNOS_AI_API_KEY is required when output.report_type is with-ai")
 	}
 
 	return nil

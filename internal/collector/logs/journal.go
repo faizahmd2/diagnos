@@ -23,12 +23,12 @@ type JournalResult struct {
 }
 
 type JournalCollector struct {
-	Executor *executor.AnsibleExecutor
+	Executor *executor.NativeExecutor
 	Timeout  time.Duration
 }
 
 func NewJournalCollector(
-	exec *executor.AnsibleExecutor,
+	exec *executor.NativeExecutor,
 	timeout time.Duration,
 ) *JournalCollector {
 	return &JournalCollector{
@@ -85,6 +85,9 @@ func (c *JournalCollector) CollectEvidence(
 	targetHost string,
 	since time.Duration,
 ) ([]Evidence, error) {
+	if !c.Executor.Supports("journalctl") {
+		return nil, nil
+	}
 	result := c.Collect(targetHost, since)
 
 	if result.Status != StatusSuccess {
