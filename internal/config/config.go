@@ -77,6 +77,7 @@ type Config struct {
 
 	Output struct {
 		ReportType string `yaml:"report_type"`
+		Directory  string `yaml:"directory"`
 	} `yaml:"output"`
 }
 
@@ -86,6 +87,10 @@ func Load(path string) (*Config, error) {
 		path = DiscoverPath()
 	}
 	if path != "" {
+		if resolved, err := filepath.Abs(path); err == nil {
+			path = resolved
+		}
+
 		data, err := os.ReadFile(path)
 		if err != nil {
 			return nil, err
@@ -112,8 +117,15 @@ func DiscoverPath() string {
 	// A downloaded release consists of only diagnos and app.yaml. Prefer the
 	// adjacent config so running it from another working directory still works.
 	if executable, err := os.Executable(); err == nil {
+		if resolved, err := filepath.EvalSymlinks(executable); err == nil {
+			executable = resolved
+		}
+
 		dir := filepath.Dir(executable)
-		candidates = append(candidates, filepath.Join(dir, "app.yaml"), filepath.Join(dir, "app.yml"))
+		candidates = append(candidates,
+			filepath.Join(dir, "app.yaml"),
+			filepath.Join(dir, "app.yml"),
+		)
 	}
 	candidates = append(candidates, "app.yaml", "app.yml", filepath.Join("configs", "app.yaml"), filepath.Join("configs", "app.yml"))
 	if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
@@ -142,6 +154,7 @@ func defaults() Config {
 	// budget used by both report modes.
 	cfg.AI.RequestLimits.MaxLinesContextFile = 250
 	cfg.Output.ReportType = "app-metrics"
+	cfg.Output.Directory = "~/diagnos/debug"
 	cfg.AI.Model = "gemini/gemini-3.5-flash-lite"
 	cfg.AI.Models = map[string]aiclient.ModelConfig{
 		cfg.AI.Model: {BaseURL: "https://generativelanguage.googleapis.com", APIKeyEnv: "DIAGNOS_AI_API_KEY"},
@@ -172,4 +185,29 @@ func applyEnv(cfg *Config) {
 		}
 	}
 	cfg.SSH.KeyPath = strings.TrimSpace(cfg.SSH.KeyPath)
+}
+
+func ResolveOutputDirectory(path string) (string, error) {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return "", fmt.Errorf("output directory cannot be empty")
+	}
+
+	if path == "~" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("resolve home directory: %w", err)
+		}
+		return home, nil
+	}
+
+	if strings.HasPrefix(path, "~/") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("resolve home directory: %w", err)
+		}
+		return filepath.Join(home, strings.TrimPrefix(path, "~/")), nil
+	}
+
+	return filepath.Clean(path), nil
 }

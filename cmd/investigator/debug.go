@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -40,6 +41,15 @@ func newDebugCmd() *cobra.Command {
 			cfg, err := config.Load(cfgPath)
 			if err != nil {
 				return fmt.Errorf("load config: %w", err)
+			}
+
+			reportDir, err := config.ResolveOutputDirectory(cfg.Output.Directory)
+			if err != nil {
+				return fmt.Errorf("resolve report directory: %w", err)
+			}
+
+			if err := os.MkdirAll(reportDir, 0755); err != nil {
+				return fmt.Errorf("create report directory: %w", err)
 			}
 
 			targetConfig, err := cfg.ResolveTarget(target)
@@ -90,7 +100,7 @@ func newDebugCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("collect machine metadata: %w", err)
 			}
-			contextWriter := collector.NewWriter("debug/context.txt")
+			contextWriter := collector.NewWriter(filepath.Join(reportDir, "context.txt"))
 			logger.Info("machine metadata collected", "hostname", metadata.Hostname, "os", metadata.OS, "os_version", metadata.OSVersion, "kernel", metadata.Kernel, "architecture", metadata.Architecture, "cpu_cores", metadata.CPUCores, "memory_bytes", metadata.Memory.TotalBytes, "disk_bytes", metadata.Disk.TotalBytes, "uptime_seconds", metadata.UptimeSeconds)
 
 			// --------------------------------------------------
@@ -228,7 +238,7 @@ func newDebugCmd() *cobra.Command {
 				)
 			}
 
-			finalContextData, err := os.ReadFile("debug/context.txt")
+			finalContextData, err := os.ReadFile(filepath.Join(reportDir, "context.txt"))
 			if err != nil {
 				return fmt.Errorf(
 					"read final analysis context: %w",
@@ -237,10 +247,13 @@ func newDebugCmd() *cobra.Command {
 			}
 			if cfg.Output.ReportType == "app-metrics" {
 				manualPrompt := buildManualPrompt(string(finalContextData), hint)
-				if err := os.WriteFile("debug/prompt1.txt", []byte(manualPrompt), 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(reportDir, "prompt1.txt"), []byte(manualPrompt), 0644); err != nil {
 					return fmt.Errorf("write manual AI prompt: %w", err)
 				}
-				report, err := writeMetricsOnlyReport("debug/final-report.md", string(finalContextData))
+				report, err := writeMetricsOnlyReport(
+					filepath.Join(reportDir, "final-report.md"),
+					string(finalContextData),
+				)
 				if err != nil {
 					return fmt.Errorf("write metrics report: %w", err)
 				}
@@ -271,7 +284,7 @@ func newDebugCmd() *cobra.Command {
 			fmt.Println("\n================ INITIAL AI REQUEST ================")
 			// fmt.Println(prompt)
 			os.WriteFile(
-				"debug/prompt1.txt",
+				filepath.Join(reportDir, "prompt1.txt"),
 				[]byte(prompt),
 				0644,
 			)
@@ -410,7 +423,7 @@ func newDebugCmd() *cobra.Command {
 			}
 
 			if err := os.WriteFile(
-				"debug/prompt2.txt",
+				filepath.Join(reportDir, "prompt2.txt"),
 				[]byte(finalPrompt),
 				0644,
 			); err != nil {
@@ -420,8 +433,9 @@ func newDebugCmd() *cobra.Command {
 				)
 			}
 
-			fmt.Println(
-				"\nFINAL AI REQUEST WRITTEN TO debug/prompt2.txt",
+			fmt.Printf(
+				"\nFINAL AI REQUEST WRITTEN TO %s\n",
+				filepath.Join(reportDir, "prompt2.txt"),
 			)
 
 			finalResponseData, err := callAI(
@@ -446,7 +460,7 @@ func newDebugCmd() *cobra.Command {
 			)
 
 			if err := os.WriteFile(
-				"debug/final-report.md",
+				filepath.Join(reportDir, "final-report.md"),
 				[]byte(finalReport),
 				0644,
 			); err != nil {

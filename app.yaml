@@ -48,3 +48,4 @@ ai:
 
 output:
   report_type: with-ai # app-metrics | with-ai (To use with ai setup AI keys and models)
+  directory: ~/diagnos/debug
